@@ -66,6 +66,13 @@
 </head>
 <body>
 
+  <!-- SE MUESTRA MIENTRAS SE VERIFICA LA SESION, PARA NO DEJAR LA PANTALLA EN BLANCO -->
+  <div id="vistaVerificandoSesion" class="container text-center" style="max-width:420px; margin-top:80px;">
+    <div class="card">
+      <p class="text-muted" style="font-weight:bold;">Verificando sesión...</p>
+    </div>
+  </div>
+
   <!-- PANTALLA DE LOGIN CON GOOGLE -->
   <div id="vistaLogin" class="container" style="max-width:420px; margin-top:80px; display:none;">
     <div class="card" style="text-align:center;">
@@ -266,6 +273,8 @@
     });
 
     async function manejarSesion(session) {
+      document.getElementById('vistaVerificandoSesion').style.display = 'none';
+
       if (!session || !session.user || !session.user.email) {
         mostrarLogin();
         return;
@@ -295,12 +304,13 @@
     async function iniciarSesionGoogle() {
       await authClient.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.href, queryParams: { hd: 'gvision.com.mx' } }
+        options: { redirectTo: window.location.origin + window.location.pathname, queryParams: { hd: 'gvision.com.mx' } }
       });
     }
 
     async function cerrarSesion() {
       await authClient.auth.signOut();
+      window.location.reload();
     }
 
     async function descargarDatosDeSupabase() {
