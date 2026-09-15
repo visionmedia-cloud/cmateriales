@@ -259,6 +259,7 @@
     const authClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     var USUARIO_CORREO = null; // se llena al iniciar sesion con Google
+    var TOKEN_SESION = null; // token real del usuario (no la llave anonima)
     var dbGlobal = { solicitudes: [], todosMateriales: [] };
     var esModoEdicion = false;
     var folioEdicionActual = '';
@@ -290,6 +291,7 @@
       }
 
       USUARIO_CORREO = correo;
+      TOKEN_SESION = session.access_token;
       document.getElementById('txtUserEmail').innerText = USUARIO_CORREO;
       document.getElementById('vistaLogin').style.display = 'none';
       document.getElementById('webAppInterface').style.display = 'block';
@@ -316,13 +318,13 @@
     async function descargarDatosDeSupabase() {
       try {
         const resSol = await fetch(SUPABASE_URL + "/rest/v1/solicitudes?correo_solicitante=eq." + encodeURIComponent(USUARIO_CORREO) + "&select=*", {
-          headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY }
+          headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + TOKEN_SESION }
         });
         if (!resSol.ok) throw new Error("No se pudieron leer las solicitudes (" + resSol.status + "): " + await resSol.text());
         const solicitudes = await resSol.json();
 
         const resMat = await fetch(SUPABASE_URL + "/rest/v1/materiales?select=*", {
-          headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY }
+          headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + TOKEN_SESION }
         });
         if (!resMat.ok) throw new Error("No se pudieron leer los materiales (" + resMat.status + "): " + await resMat.text());
         const materiales = await resMat.json();
@@ -445,7 +447,7 @@
           // No mandamos "folio": Supabase lo genera solo con generar_folio() (ver setup_supabase.sql)
           const res = await fetch(SUPABASE_URL + "/rest/v1/solicitudes?select=folio", {
             method: "POST",
-            headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Content-Type": "application/json", "Prefer": "return=representation" },
+            headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + TOKEN_SESION, "Content-Type": "application/json", "Prefer": "return=representation" },
             body: JSON.stringify(datosSolicitud)
           });
           if (!res.ok) throw new Error("No se pudo crear la solicitud (" + res.status + "): " + await res.text());
@@ -454,7 +456,7 @@
         } else {
           const resUpd = await fetch(SUPABASE_URL + "/rest/v1/solicitudes?folio=eq." + encodeURIComponent(folioAsignado), {
             method: "PATCH",
-            headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
+            headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + TOKEN_SESION, "Content-Type": "application/json" },
             body: JSON.stringify({
               nombre_solicitante: datosSolicitud.nombre_solicitante,
               fecha_requerimiento: datosSolicitud.fecha_requerimiento,
@@ -468,7 +470,7 @@
 
           const resDel = await fetch(SUPABASE_URL + "/rest/v1/materiales?folio=eq." + encodeURIComponent(folioAsignado), {
             method: "DELETE",
-            headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY }
+            headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + TOKEN_SESION }
           });
           if (!resDel.ok) throw new Error("No se pudieron reemplazar los materiales (" + resDel.status + "): " + await resDel.text());
         }
@@ -492,7 +494,7 @@
         if (arrMateriales.length > 0) {
           const resMatPost = await fetch(SUPABASE_URL + "/rest/v1/materiales", {
             method: "POST",
-            headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
+            headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + TOKEN_SESION, "Content-Type": "application/json" },
             body: JSON.stringify(arrMateriales)
           });
           if (!resMatPost.ok) throw new Error("No se pudieron guardar los materiales (" + resMatPost.status + "): " + await resMatPost.text());
