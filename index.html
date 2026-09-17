@@ -365,11 +365,13 @@
     const SUPABASE_URL = "https://odwrgrmhdutlhtmyfthk.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kd3Jncm1oZHV0bGh0bXlmdGhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzOTkwMTcsImV4cCI6MjEwNDk3NTAxN30.0MkcJW0M3eP8aSCd4UwMfTkh3-PkXyJ5gjuBGuCHy-w";
     const DOMINIO_RESTRINGIDO = "@gvision.com.mx";
+    const CORREO_COMPRAS = "compras@gvision.com.mx";
 
     const authClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     var USUARIO_CORREO = null; // se llena al iniciar sesion con Google
     var TOKEN_SESION = null; // token real del usuario (no la llave anonima)
+    var ES_COMPRAS = false;
     var dbGlobal = { solicitudes: [], todosMateriales: [] };
     var esModoEdicion = false;
     var folioEdicionActual = '';
@@ -402,15 +404,21 @@
 
       USUARIO_CORREO = correo;
       TOKEN_SESION = session.access_token;
+      ES_COMPRAS = (USUARIO_CORREO === CORREO_COMPRAS);
       document.getElementById('txtUserEmail').innerText = USUARIO_CORREO;
       document.getElementById('vistaLogin').style.display = 'none';
       document.getElementById('webAppInterface').style.display = 'block';
+
+      var tituloH1 = document.querySelector('#webAppInterface h1');
+      if (tituloH1) tituloH1.innerText = ES_COMPRAS ? 'Bandeja de Compras' : 'Control de Materiales';
+      document.getElementById('btnNuevoArea').style.display = ES_COMPRAS ? 'none' : 'block';
+
       await descargarDatosDeSupabase();
     }
 
     function mostrarLogin() {
       document.getElementById('webAppInterface').style.display = 'none';
-      document.getElementById('vistaLogin').style.display = 'block';
+      document.getElementById('vistaLogin').style.display = 'flex';
     }
 
     async function iniciarSesionGoogle() {
@@ -427,7 +435,12 @@
 
     async function descargarDatosDeSupabase() {
       try {
-        const resSol = await fetch(SUPABASE_URL + "/rest/v1/solicitudes?correo_solicitante=eq." + encodeURIComponent(USUARIO_CORREO) + "&select=*", {
+        var urlSolicitudes = SUPABASE_URL + "/rest/v1/solicitudes?select=*";
+        if (!ES_COMPRAS) {
+          urlSolicitudes += "&correo_solicitante=eq." + encodeURIComponent(USUARIO_CORREO);
+        }
+
+        const resSol = await fetch(urlSolicitudes, {
           headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + TOKEN_SESION }
         });
         if (!resSol.ok) throw new Error("No se pudieron leer las solicitudes (" + resSol.status + "): " + await resSol.text());
@@ -482,9 +495,9 @@
       var html = '';
       dbGlobal.solicitudes.forEach(function (sol) {
         var badgeClase = sol.estatus === 'En proceso' ? 'badge-proceso' : (sol.estatus === 'Completado' ? 'badge-completado' : 'badge-pendiente');
-        var puedeEditar = sol.estatus === 'Recibida';
+        var puedeEditar = sol.estatus === 'Recibida' && !ES_COMPRAS;
         html += '<tr>' +
-          '<td style="font-weight:800;">' + sol.folio + '</td>' +
+          '<td style="font-weight:800;">' + sol.folio + (ES_COMPRAS ? '<div style="font-weight:400; font-size:11px; color:var(--text-muted);">' + sol.correo_solicitante + '</div>' : '') + '</td>' +
           '<td>' + sol.fecha_solicitud + '</td>' +
           '<td><div style="font-weight:700; color:#000;">' + sol.nombre_proyecto + '</div><div style="font-size:12px; color:var(--text-muted);">OP: ' + sol.orden_produccion + '</div></td>' +
           '<td>' + sol.empresa_acreedora + '</td>' +
