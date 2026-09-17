@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Solicitud de Materiales - Grupo Visión</title>
+<title>Control de Materiales - Grupo Visión</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
@@ -35,12 +35,15 @@
 
   /* ============ PANTALLA DE LOGIN ============ */
   .pantalla-login {
-    min-height: 100vh;
+    position: fixed;
+    inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     background: radial-gradient(circle at 30% 20%, #1e2937 0%, #0f172a 55%, #05070c 100%);
     padding: 20px;
+    overflow-y: auto;
+    z-index: 999;
   }
   .tarjeta-login {
     width: 100%;
@@ -157,8 +160,8 @@
 <body>
 
   <!-- SE MUESTRA MIENTRAS SE VERIFICA LA SESION, PARA NO DEJAR LA PANTALLA EN BLANCO -->
-  <div id="vistaVerificandoSesion" class="container text-center" style="max-width:420px; margin-top:80px;">
-    <div class="card">
+  <div id="vistaVerificandoSesion" class="pantalla-login" style="background:#f8fafc;">
+    <div class="card text-center" style="max-width:340px;">
       <p class="text-muted" style="font-weight:bold;">Verificando sesión...</p>
     </div>
   </div>
